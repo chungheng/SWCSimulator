@@ -57,4 +57,5 @@ for i,_ in enumerate(simulator):
 This repository is maintained by following people:
 
 * [Chung-Heng Yeh](http://www.bionet.ee.columbia.edu/people)
+* [Mehmet Kerem Turkcan](http://www.bionet.ee.columbia.edu/people)
 * [Tingkai (Thomas) Liu](http://www.bionet.ee.columbia.edu/people)
