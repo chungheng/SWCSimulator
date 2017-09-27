@@ -247,7 +247,7 @@ class SWCNeuron(object):
 
     def create_simulator(self, dt, *args, **kwargs):
         """
-        Creat a simulator for given stimuli sets.
+        Create a simulator for given stimuli sets.
 
         Parameters
         ----------
@@ -327,7 +327,6 @@ class SWCNeuron(object):
 
             yield self
 
-
     def set_node(self, nid, **kwargs):
         """
         Parameters
@@ -356,6 +355,20 @@ class SWCNeuron(object):
             states = None or states
         self.graph.node[nid]['params'] = params
         self.graph.node[nid]['initStates'] = states
+
+    def get_no_params(self):
+        """
+        Get the current number of parameters.
+
+        Returns:
+        --------
+        The total number of parameters in the neuron model specification.
+
+        """
+        no_params = 0
+        for u,v in self.graph.nodes_iter(data=True):
+            no_params += len(v['model'].defaultParams._asdict().keys())
+        return no_params
 
 if __name__ == '__main__':
 
