@@ -71,6 +71,8 @@ class SWCNeuron(object):
             self.graph = self._read_swc(obj, **swcKwargs)
         elif type(obj) is pd.DataFrame:
             self.graph = self._read_dataframe(obj)
+        else:
+            raise TypeError('Unsupported type for SWC file/object: %r' % type(obj))
 
     def _read_swc(self, filename_or_buffer, **kwargs):
         """
@@ -115,9 +117,9 @@ class SWCNeuron(object):
             raise TypeError('Unexpected **kwargs: %r' % kwargs)
 
         if type(header) in (tuple, list):
-            assert(set(self.defaultHeader) == set(header))
+            assert(set(self.defaultHeader) <= set(header))
         elif type(header) is dict:
-            assert(set(self.defaultHeader) == set(header.values()))
+            assert(set(self.defaultHeader) <= set(header.values()))
         else:
             raise TypeError('Unexpected header type: %r' % header)
 
@@ -134,15 +136,18 @@ class SWCNeuron(object):
 
         if hasHeader:
             if type(header) in (tuple, list):
-                assert(set(csvHeader) == set(header))
+                assert(set(header) == set(csvHeader))
                 header = csvHeader
             elif type(header) is dict:
-                assert(set(csvHeader) == set(header.values()))
-                header = [header[k] for k in csvHeader]
+                assert(set(header.values()) <= set(csvHeader))
+                header = [header.get(k,k) for k in csvHeader]
         else:
             if not type(header) in (tuple, list):
                 raise TypeError('If SWC file contains no header row, the ' \
                     '"header" argument should be None, a tuple, or a list.')
+            if len(csvHeader) > len(header):
+                n = len(csvHeader) - len(header)
+                header = list(header) + ['']*n
 
         hasHeader = 0 if hasHeader else None
         df = pd.read_csv(filename_or_buffer, delimiter=delimiter, names=header,
@@ -152,7 +157,7 @@ class SWCNeuron(object):
 
     def _read_dataframe(self, df, checkHeader=True):
         if checkHeader:
-            assert(set(df.columns) == set(defaultHeader))
+            assert(set(defaultHeader) <= set(df.columns))
 
         for k,v in self.typeDict.items():
             df[k] = df[k].astype(v)
@@ -391,7 +396,7 @@ if __name__ == '__main__':
     I = np.zeros((neuron.graph.number_of_edges(), len(t)))
     for i, _ in enumerate(sim):
         for j,n in enumerate(neuron.graph.nodes_iter()):
-            V[j][i] = neuron.graph.node[n]['states'].V
+            V[j][i] = neuron[n]['states'].V
         for j, (u,v,d) in enumerate(neuron.graph.edges_iter(data=True)):
             I[j][i] = d['I']
 
