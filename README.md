@@ -23,6 +23,7 @@ neuron = SWCNeuron('neuron.swc')
 ```
 The SWC file is converted to a `Networkx` graph, in which each node represents a segment in the original SWC file, and each edge represents the link between two segments. A node has three required attributes:
 
+* `morphology`: the raw data from the SWC file.
 * `model`: a python class implementing a neural computational model, ex. Hodgkin-Huxley model.
 * `params`: parameters of the computational model. If not specified, the default set of parameter will be used.
 * `states`: states variables of the computational model. `states` must have at least two fields, `I` and `V`.
