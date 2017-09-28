@@ -367,7 +367,7 @@ class SWCNeuron(object):
         """
         no_params = 0
         for u,v in self.graph.nodes_iter(data=True):
-            no_params += len(v['model'].defaultParams._asdict().keys())
+            no_params += len(v['model'].defaultParams._fields)
         return no_params
 
 if __name__ == '__main__':
