@@ -182,6 +182,74 @@ class HodgkinHuxley(Neuron):
         newStates = super(HodgkinHuxley, cls).update(1e3*dt, states, params)
         return newStates
 
+class ConnorStevens(Neuron):
+    """
+    Connor Stevens Neuron Model
+    """
+    Params = recordclass('params', (
+        'E_Na','E_K','E_a','E_l','g_Na','g_K','g_a','g_l','ms','hs','ns'))
+    States = recordclass('states', ('V','I','n','m','h','a','b'))
+    initStates = States(V=-65., n=0.0, m=0.0, h=1.0, I=0., a=0., b=0.)
+    defaultParams = Params(
+        E_Na=55.,
+        E_K=-72.,
+        E_a=-75.,
+        E_l=-17.,
+        g_Na=120.,
+        g_K=20.,
+        g_a=47.7,
+        g_l=0.3,
+        ms=-5.3,
+        hs=-12.0,
+        ns=-4.3)
+
+    @classmethod
+    def ode(cls, states, params=None):
+        params = params or cls.defaultParams
+        gradStates = cls.States(*[0.]*len(cls.States._fields))
+
+        a_m = -.1*(states.V+35.+params.ms)/(exp(-(states.V+35.+params.ms)/10.)-1.)
+        b_m = 4.*exp(-(states.V+60.+params.ms)/18.)
+        m_inf = a_m/(a_m+b_m)
+        tau_m = 1./(3.8*(a_m+b_m))
+        gradStates.m = (m_inf-states.m)/tau_m
+
+        a_h = .07*exp(-(states.V+60+params.hs)/20);
+        b_h = 1/(1+exp(-(states.V+30+params.hs)/10));
+        h_inf = a_h/(a_h+b_h);
+        tau_h = 1/(3.8*(a_h+b_h));
+        gradStates.h = (h_inf-states.h)/tau_h
+
+        a_n = -.01*(states.V+50+params.ns)/(exp(-(states.V+50+params.ns)/10)-1);
+        b_n = .125*exp(-(states.V+60+params.ns)/80);
+        n_inf = a_n/(a_n+b_n);
+        tau_n = 2/(3.8*(a_n+b_n));
+        gradStates.n = (n_inf-states.n)/tau_n
+
+        a_inf = pow(.0761*exp((states.V+94.22)/31.84)/(1+exp((states.V+1.17)/28.93)),.3333);
+        tau_a = .3632+1.158/(1+exp((states.V+55.96)/20.12));
+        gradStates.a = (a_inf-states.a)/tau_a
+
+        b_inf = pow(1/(1+exp((states.V+53.3)/14.54)),4)
+        tau_b = 1.24+2.678/(1+exp((states.V+50)/16.027))
+        gradStates.b = (b_inf-states.b)/tau_b
+
+        # compute derivative of states.V
+        gradStates.V = states.I \
+            - params.g_K*(states.n**4)*(states.V-params.E_K) \
+            - params.g_Na*(states.m**3)*states.h*(states.V-params.E_Na) \
+            - params.g_a*(states.a**3)*states.b*(states.V-params.E_a) \
+            - params.g_l*(states.V-params.E_l)
+
+        return gradStates
+
+    @classmethod
+    def update(cls, dt, states, params=None):
+        newStates = super(ConnorStevens, cls).update(1e3*dt, states, params)
+        return newStates
+
+
+
 class FitzHughNagumo(Neuron):
     """
     FitzHugh-Nagumo Neuron
@@ -198,7 +266,7 @@ class FitzHughNagumo(Neuron):
 
         gradStates.V = states.V - states.V**3/3. - states.W + states.I
         gradStates.W = 0.08*(states.V+0.7-0.8*states.W)
-        return gradStates.W
+        return gradStates
 
 if __name__ == '__main__':
     import numpy as np
@@ -213,7 +281,7 @@ if __name__ == '__main__':
     stimulus = np.zeros_like(t)
     stimulus[t > stimulusStart] = 20
 
-    models = (PassiveModel, HodgkinHuxley, IAF)
+    models = (PassiveModel, HodgkinHuxley, ConnorStevens, FitzHughNagumo, IAF)
     states = {k:k.initStates._replace() for k in models}
     vTraces = {k:np.zeros_like(t) for k in models}
 
