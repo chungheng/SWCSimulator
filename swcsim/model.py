@@ -253,20 +253,29 @@ class ConnorStevens(Neuron):
 class FitzHughNagumo(Neuron):
     """
     FitzHugh-Nagumo Neuron
+
+    TODO: Fix units of the model parameters. The default unit of FitzHughNagumo
+    is of second, Voltage, Ampere, etc.
     """
-    Params = recordclass('params', ())
+    Params = recordclass('params', ('tau','a','b'))
     States = recordclass('states', ('V','I','W'))
-    initStates = States(V=-65., W=0., I=0.)
-    defaultParams = Params()
+    initStates = States(V=-2., W=0., I=0.)
+    defaultParams = Params(tau=12.5, a=0.7*1e3, b=0.8*1e3)
 
     @classmethod
     def ode(cls, states, params=None):
         params = params or cls.defaultParams
         gradStates = cls.States(*[0.]*len(cls.States._fields))
 
-        gradStates.V = states.V - states.V**3/3. - states.W + states.I
-        gradStates.W = 0.08*(states.V+0.7-0.8*states.W)
+        gradStates.V = states.V - states.V**3./3. - states.W + states.I
+        gradStates.W = 1./params.tau*(states.V+params.a-params.b*states.W)
         return gradStates
+
+    @classmethod
+    def update(cls, dt, states, params=None):
+        # states.I *=
+        newStates = super(FitzHughNagumo, cls).update(dt, states, params)
+        return newStates
 
 if __name__ == '__main__':
     import numpy as np
