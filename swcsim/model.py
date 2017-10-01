@@ -290,9 +290,10 @@ if __name__ == '__main__':
     stimulus = np.zeros_like(t)
     stimulus[t > stimulusStart] = 20
 
-    models = (PassiveModel, HodgkinHuxley, ConnorStevens, FitzHughNagumo, IAF)
+    models = Neuron.__subclasses__()
     states = {k:k.initStates._replace() for k in models}
     vTraces = {k:np.zeros_like(t) for k in models}
+
 
     for i, s in enumerate(stimulus):
         for m in models:
@@ -308,4 +309,4 @@ if __name__ == '__main__':
         ax.set_title(m.__name__)
 
     plt.tight_layout()
-    plt.savefig('hhn.png', dpi=300)
+    plt.savefig('model.png', dpi=300)
