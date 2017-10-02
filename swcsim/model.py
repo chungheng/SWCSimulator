@@ -249,8 +249,6 @@ class ConnorStevens(Neuron):
         newStates = super(ConnorStevens, cls).update(1e3*dt, states, params)
         return newStates
 
-
-
 class FitzHughNagumo(Neuron):
     """
     FitzHugh-Nagumo Neuron
@@ -278,6 +276,39 @@ class FitzHughNagumo(Neuron):
         newStates = super(FitzHughNagumo, cls).update(dt, states, params)
         return newStates
 
+class OdorantReceptor(Neuron):
+    """
+    Odorant Receptor Model
+    """
+    States = recordclass('States', ('x1', 'x2','x3','V','I'))
+    Params = recordclass('Params',
+        ('c1','d1','c2','d2','c3','d3','k','n','c','gmax'))
+    initStates = States(x1=0, x2=0, x3=0, V=0, I=0)
+    defaultParams = Params(c1=3, d1=90, c2=90, d2=60, c3=0.15, d3=0.45, k=3000,
+        gmax=200, n=4, c=0.2)
+
+    @classmethod
+    def ode(cls, states, params=None):
+        params = params or cls.defaultParams
+        gradStates = cls.States(*[0.]*len(cls.States._fields))
+
+        f = -params.k*states.x2*states.x3
+
+        gradStates.x1 = params.c1*states.I*(1.-states.x1) - params.d1*states.x1
+        gradStates.x2 = params.c2*states.x1*(1.-states.x2) - params.d2*states.x2 + f
+        gradStates.x3 = params.c3*states.x2*(1.-states.x3) - params.d3*states.x3
+
+        return gradStates
+
+    @classmethod
+    def update(cls, dt, states, params=None):
+        params = params or cls.defaultParams
+        newStates = super(OdorantReceptor, cls).update(dt, states, params)
+
+        hill = lambda x: x**params.n / (x**params.n + params.c**params.n)
+        newStates.V = params.gmax * hill(newStates.x2)
+        return newStates
+
 if __name__ == '__main__':
     import numpy as np
     import matplotlib
@@ -295,19 +326,19 @@ if __name__ == '__main__':
     states = {k:k.initStates._replace() for k in models}
     vTraces = {k:np.zeros_like(t) for k in models}
 
-
     for i, s in enumerate(stimulus):
         for m in models:
             states[m] = states[m]._replace(I=s)
             states[m] = m.update(dt, states[m])
             vTraces[m][i] = states[m].V
 
-    fig, axes = plt.subplots(len(models), 1, figsize=(8,8))
+    fig, axes = plt.subplots(len(models), 1, figsize=(8, len(models)*2))
     for ax, m in zip(axes, models):
         ax.plot(t,vTraces[m])
         ax.set_xlabel('Time, [s]')
         ax.set_ylabel('Voltage, [mV]')
         ax.set_title(m.__name__)
+        ax.grid()
 
     plt.tight_layout()
     plt.savefig('model.png', dpi=300)
