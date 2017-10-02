@@ -4,6 +4,7 @@ Abstract Neuron Class
 from abc import ABCMeta, abstractmethod
 from math import exp
 from recordclass import recordclass
+import numpy as np
 
 class Neuron(object):
     """
