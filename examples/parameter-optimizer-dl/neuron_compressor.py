@@ -48,7 +48,8 @@ def simplelstmdense_model(N, X, Y):
     model.add(Bidirectional(LSTM(N,
                   return_sequences = True,
                   implementation = 2,
-                  dropout=0.00, recurrent_dropout=0.00), input_shape=X.shape[1:]))
+                  dropout=0.00, recurrent_dropout=0.00),
+              input_shape=X.shape[1:]))
     model.add(Dense(Y.shape[-1]))
     model.summary()
     metatype = {}
@@ -66,9 +67,10 @@ def hhn_recovery_model(N, X, Y):
     model = Sequential()
     model.add(BatchNormalization(input_shape=X.shape[1:]))
     model.add(Bidirectional(LSTM(N,
-                  return_sequences = True,
-                  implementation = 2,
-                  dropout=0.00, recurrent_dropout=0.00)))
+                                 return_sequences = True,
+                                 implementation = 2,
+                                 dropout=0.00, recurrent_dropout=0.00),
+              input_shape=X.shape[1:]))
     model.add(Dense(Y.shape[-1]))
     model.summary()
     metatype = {}
